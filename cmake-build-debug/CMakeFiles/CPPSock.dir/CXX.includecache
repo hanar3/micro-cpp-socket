@@ -1,0 +1,32 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+D:/dev/CPPSock/Socket.cpp
+Socket.h
+D:/dev/CPPSock/Socket.h
+
+D:/dev/CPPSock/Socket.h
+windows.h
+-
+winsock2.h
+-
+iostream
+-
+ws2tcpip.h
+-
+iphlpapi.h
+-
+wspiapi.h
+-
+cstdio
+-
+
+D:/dev/CPPSock/main.cpp
+Socket.h
+D:/dev/CPPSock/Socket.h
+
