@@ -10,6 +10,13 @@ Socket::Socket() {
     //ZeroMemory
     memset(&hints, 0, sizeof(hints));
 
+    unsigned int i;
+    for (i = 0; i < SOMAXCONN; i++)
+    {
+        clients[i] = 0;
+    }
+
+
 
     // Setup our hints for getaddrinfo
     hints.ai_family = AF_INET;
@@ -47,37 +54,34 @@ void Socket::Listen() {
         WSACleanup();
     }
     printf("Waiting for client.\n");
+    while (iResult > 0) {
+        FD_ZERO(&readfds);
+        FD_SET(ListenSocket, &readfds);
 
-
-    ClientSocket = accept(ListenSocket, nullptr, nullptr);
-    if (ClientSocket == INVALID_SOCKET) {
-        printf("Accept failed: %d\n", WSAGetLastError());
-    }
-    printf("Client connected\n");
-
-    char recvbuf[512];
-    int iSendResult;
-
-    int recvbuflen = 512;
-
-    do {
-        iResult = recv(ClientSocket, recvbuf, recvbuflen, 0);
-        if(iResult > 0) {
-            recvbuf[iResult] = '\0';
-            iSendResult = send(ClientSocket, recvbuf, iResult, 0);
-            if (onMessage != nullptr) {
-                onMessage(recvbuf, (size_t)iResult);
-            }
-            if (iSendResult == SOCKET_ERROR) {
-                printf("send failed: %d\n", WSAGetLastError());
-                closesocket(ClientSocket);
-                WSACleanup();
-            }
-            printf("Bytes sent: %d\n", iSendResult);
-        } else if (result == nullptr) {
-            printf("Connection closing...\n");
+        // Populate the set with valid sockets
+        for (unsigned int i = 0; i < SOMAXCONN; i++) {
+           unsigned int sd = clients[i]; // socket descriptor
+           if (sd > 0)
+               FD_SET(sd, &readfds);
         }
-    } while(iResult > 0);
+
+        int activity = select(0, &readfds, NULL, NULL,NULL);
+        if (activity < 0 && errno != EINTR) {
+            printf("Select error");
+        }
+
+        //If something happened on the master socket ,
+        //then its an incoming connection
+
+        if (FD_ISSET(ListenSocket, &readfds)) {
+            ClientSocket = accept(ListenSocket, NULL, NULL);
+            if (ClientSocket == INVALID_SOCKET) {
+                closesocket(ListenSocket);
+                Disconnect();
+            }
+        }
+    }
+
     Disconnect();
 }
 

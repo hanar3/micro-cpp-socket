@@ -25,6 +25,7 @@ public:
     WSAData wsaData;
     int iResult;
     FD_SET readfds;
+    unsigned int clients[SOMAXCONN];
     struct addrinfo *result = nullptr, *ptr = nullptr, hints;
     SOCKET ListenSocket = INVALID_SOCKET;
     SOCKET ClientSocket = INVALID_SOCKET;
