@@ -18,14 +18,14 @@
 #include <cstdio>
 
 #define DEFAULT_PORT "27015"
-#define errno WSAGetLastError()
-
+#define BUF_LEN 1025
 class Socket {
 public:
     WSAData wsaData;
     int iResult;
     FD_SET readfds;
-    unsigned int clients[SOMAXCONN];
+    SOCKET clients[256];
+    char buffer[BUF_LEN];
     struct addrinfo *result = nullptr, *ptr = nullptr, hints;
     SOCKET ListenSocket = INVALID_SOCKET;
     SOCKET ClientSocket = INVALID_SOCKET;

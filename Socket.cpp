@@ -11,7 +11,7 @@ Socket::Socket() {
     memset(&hints, 0, sizeof(hints));
 
     unsigned int i;
-    for (i = 0; i < SOMAXCONN; i++)
+    for (i = 0; i < 256; i++)
     {
         clients[i] = 0;
     }
@@ -54,20 +54,20 @@ void Socket::Listen() {
         WSACleanup();
     }
     printf("Waiting for client.\n");
-    while (iResult > 0) {
+    while (true) {
         FD_ZERO(&readfds);
         FD_SET(ListenSocket, &readfds);
 
         // Populate the set with valid sockets
-        for (unsigned int i = 0; i < SOMAXCONN; i++) {
-           unsigned int sd = clients[i]; // socket descriptor
-           if (sd > 0)
+        for (unsigned int sd : clients) {
+           // socket descriptor
+           if (sd != 0)
                FD_SET(sd, &readfds);
         }
 
         int activity = select(0, &readfds, NULL, NULL,NULL);
         if (activity < 0 && errno != EINTR) {
-            printf("Select error");
+            printf("Select error\n");
         }
 
         //If something happened on the master socket ,
@@ -79,7 +79,32 @@ void Socket::Listen() {
                 closesocket(ListenSocket);
                 Disconnect();
             }
+            for (unsigned  int i = 0; i < 256; i++) {
+                //if position is empty
+                if(clients[i] == 0)
+                {
+                    clients[i] = ClientSocket;
+                    printf("Adding to list of sockets as %d\n" , i);
+                    break;
+                }
+            }
         }
+
+        for (unsigned int sd : clients) {
+            if (FD_ISSET(sd, &readfds)) {
+                int res = recv(sd, buffer, BUF_LEN, 0);
+                if (res <= 0) {
+                    printf("Connection closing..");
+                    closesocket(sd);
+                    sd = 0;
+                } else {
+                    buffer[BUF_LEN] = '\0';
+                    printf("Bytes received: %d", res);
+                }
+            }
+
+        }
+
     }
 
     Disconnect();
